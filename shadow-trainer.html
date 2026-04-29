@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Shadow">
+<title>Shadow Trainer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f5;
+    --muted: #888899;
+    --accent: #7c6af7;
+    --accent2: #a594ff;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --radius: 16px;
+    --font: 'Helvetica Neue', -apple-system, sans-serif;
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); }
+  body { display: flex; flex-direction: column; min-height: 100vh; min-height: -webkit-fill-available; }
+  
+  header {
+    padding: env(safe-area-inset-top, 44px) 20px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg);
+  }
+  .app-title { font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); }
+  .set-badge { font-size: 12px; color: var(--muted); background: var(--surface); padding: 4px 10px; border-radius: 20px; }
+
+  .progress-wrap { padding: 0 20px 20px; }
+  .progress-track { height: 2px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-align: right; }
+
+  main { flex: 1; padding: 0 20px; overflow-y: auto; }
+
+  .phrase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+  .cat-tag {
+    display: inline-block;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(124,106,247,0.15);
+    padding: 3px 8px; border-radius: 6px; margin-bottom: 14px;
+  }
+  .jp { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+  .en { font-size: 22px; font-weight: 500; line-height: 1.4; color: var(--text); letter-spacing: -0.01em; }
+
+  .status-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 12px; min-height: 56px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; background: var(--muted); transition: background 0.3s; }
+  .dot.speaking { background: var(--accent); animation: blink 1s infinite; }
+  .dot.recording { background: var(--red); animation: blink 0.6s infinite; }
+  .dot.done { background: var(--green); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .status-msg { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .spoken { font-size: 11px; color: rgba(124,106,247,0.7); margin-top: 4px; font-style: italic; }
+
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .btn-full { grid-column: span 2; }
+  button {
+    font-family: var(--font); font-size: 14px; font-weight: 500;
+    padding: 14px 12px; border-radius: 12px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text);
+    cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    -webkit-appearance: none;
+  }
+  button:active { transform: scale(0.97); opacity: 0.85; }
+  button:disabled { opacity: 0.3; }
+  button.accent { background: var(--accent); color: #fff; border-color: transparent; }
+  button.stop-btn { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.3); color: var(--red); }
+
+  .feedback {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .score-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .score-num { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; }
+  .score-sub { font-size: 13px; color: var(--muted); }
+  .fb-text { font-size: 13px; color: var(--muted); line-height: 1.8; white-space: pre-wrap; }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .nav-btn { flex: 1; padding: 12px; font-size: 13px; }
+  .nav-mid { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+  .complete-view { text-align: center; padding: 60px 20px; }
+  .complete-view h2 { font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+  .complete-view p { font-size: 15px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+  .complete-view button { width: 100%; padding: 16px; font-size: 16px; }
+
+  footer { height: env(safe-area-inset-bottom, 20px); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="app-title">Shadow Trainer</div>
+  <div class="set-badge" id="set-badge">Set 1</div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-track"><div class="progress-fill" id="progress" style="width:10%"></div></div>
+  <div class="progress-label" id="prog-label">1 / 10</div>
+</div>
+
+<main>
+  <div id="main-view">
+    <div class="phrase-card">
+      <div class="cat-tag" id="cat"></div>
+      <div class="jp" id="jp"></div>
+      <div class="en" id="en"></div>
+    </div>
+
+    <div class="status-box">
+      <div class="dot" id="dot"></div>
+      <div>
+        <div class="status-msg" id="status-msg">「まず聴く」で英文を確認してください</div>
+        <div class="spoken" id="spoken"></div>
+      </div>
+    </div>
+
+    <div class="btn-grid">
+      <button class="accent btn-full" id="btn-listen" onclick="doListen()">📢 まず聴く</button>
+      <button id="btn-play" onclick="doShadow(1.0)" disabled>▶ 再生</button>
+      <button id="btn-half" onclick="doShadow(0.5)" disabled>🐢 0.5倍速</button>
+      <button class="stop-btn btn-full" id="btn-stop" onclick="doStop()" disabled>⏹ 停止・判定</button>
+    </div>
+
+    <div id="feedback-area"></div>
+
+    <div class="nav-row">
+      <button class="nav-btn" onclick="goNav(-1)">← 前へ</button>
+      <div class="nav-mid" id="nav-mid">1 / 10</div>
+      <button class="nav-btn" onclick="goNav(1)">次へ →</button>
+    </div>
+  </div>
+
+  <div id="complete-view" class="complete-view" style="display:none">
+    <h2>🎉 セット完了！</h2>
+    <p id="complete-msg"></p>
+    <button class="accent" onclick="startNewSet()">次のセットへ →</button>
+  </div>
+</main>
+
+<footer></footer>
+
+<script>
+const PHRASES = [
+  {cat:"挨拶",jp:"ご機嫌いかがですか?",en:"How are you doing?"},
+  {cat:"挨拶",jp:"最近何か面白いことありました?",en:"What's up?"},
+  {cat:"挨拶",jp:"どのような1週間でしたか？",en:"How was your week?"},
+  {cat:"挨拶",jp:"今週は大変でした。",en:"It was a tough week."},
+  {cat:"挨拶",jp:"初めまして、営業部のアキコと申します。",en:"I'm Akiko. I'm in Sales. Nice to meet you."},
+  {cat:"オフィス",jp:"資料を見せていただけますか?",en:"Could I see the document?"},
+  {cat:"オフィス",jp:"会議室はどこですか？",en:"Where is the meeting room?"},
+  {cat:"オフィス",jp:"教えてくれてありがとうございます。",en:"Thank you for letting me know."},
+  {cat:"同僚",jp:"週末の予定はありますか?",en:"Do you have any plans this weekend?"},
+  {cat:"同僚",jp:"普段は残業をされているのですか？",en:"Do you usually work overtime?"},
+  {cat:"同僚",jp:"楽しんできてください。",en:"I hope you have fun."},
+  {cat:"依頼",jp:"ファイルを送っていただけますか?",en:"Could you send me the file?"},
+  {cat:"依頼",jp:"お忙しいところすみません。数字を見せていただきたいです。",en:"Sorry to bother you. I would like to see the figures."},
+  {cat:"依頼",jp:"今日中に全て終わらせるようにします。",en:"I'll make sure to finish everything today."},
+  {cat:"依頼",jp:"チームに共有しますね。",en:"Let me share that with my team."},
+  {cat:"依頼",jp:"IT部門に聞いてみるのはいかがでしょう?",en:"Why don't we ask the IT department?"},
+  {cat:"進捗",jp:"プロジェクトはどうですか?",en:"How is your project going?"},
+  {cat:"進捗",jp:"予定通りです。",en:"It's on schedule."},
+  {cat:"進捗",jp:"期日を後ろ倒しすべきだと思います。",en:"I think we should push back the deadline."},
+  {cat:"進捗",jp:"他の作業を優先しなければなりませんでした。",en:"I had to prioritize another task."},
+  {cat:"問題解決",jp:"代わりに木曜日に打ち合わせできますか?",en:"Can we meet on Thursday instead?"},
+  {cat:"問題解決",jp:"日程が決まり次第ご連絡します。",en:"I will let you know when we fix the date."},
+  {cat:"問題解決",jp:"順調にいけば30日にリリースします。",en:"If things go well, we will release it on the 30th."},
+  {cat:"問題解決",jp:"手段を変えてみることにしました。",en:"We've decided to try a different approach."},
+  {cat:"会議",jp:"全員揃ってますか？",en:"Is everyone here?"},
+  {cat:"会議",jp:"（会議を）始めましょうか。",en:"Shall we get started?"},
+  {cat:"会議",jp:"アジェンダ（議題）に移ります。",en:"Let me go over the agenda."},
+  {cat:"会議",jp:"良いポイントですね。",en:"That's a good point."},
+  {cat:"会議",jp:"全く賛成です。",en:"I totally agree with you."},
+  {cat:"会議",jp:"私は違う意見です。",en:"I have a different opinion."},
+  {cat:"会議",jp:"あなたが正しいかもしれません。",en:"Maybe you're right."},
+  {cat:"会議",jp:"声が聞こえません。",en:"I can't hear you."},
+  {cat:"会議",jp:"ネットの接続が悪いようです。",en:"I think there's a connection issue."},
+  {cat:"会議",jp:"よろしければ、そろそろ会議をまとめます。",en:"If it's OK with everyone, I'd like to wrap up this meeting."},
+  {cat:"会議",jp:"お時間いただきありがとうございました。",en:"Thank you for your time."},
+  {cat:"プレゼン",jp:"今日はみなさん、お時間いただきありがとうございます。",en:"Thank you for your time today, everyone."},
+  {cat:"プレゼン",jp:"次のセールスキャンペーンについてお話ししたいと思います。",en:"I'd like to talk about our next sales campaign."},
+  {cat:"プレゼン",jp:"まとめますと...",en:"So, just to wrap up..."},
+  {cat:"プレゼン",jp:"何か質問はありますか？",en:"Are there any questions?"},
+  {cat:"プレゼン",jp:"ご清聴ありがとうございました。",en:"Thank you for your attention."},
+  {cat:"プレゼン",jp:"すみませんが、社外秘です。",en:"I'm sorry, but that is confidential."},
+  {cat:"電話",jp:"お電話ありがとうございます。ABC社です。",en:"Thank you for calling ABC company. How can I help you?"},
+  {cat:"電話",jp:"すみません、ゆっくり話していただけますか？",en:"I'm sorry. Could you please slow down?"},
+  {cat:"電話",jp:"お名前をお伺いできますでしょうか。",en:"May I have your name, please?"},
+  {cat:"電話",jp:"伝言をお預かりしましょうか？",en:"May I take a message?"},
+  {cat:"電話",jp:"彼に折り返し電話をお願いできますか？",en:"Could you tell him to call me back?"},
+  {cat:"電話",jp:"折り返しはいつ頃がご都合よろしいでしょうか？",en:"What's the best time to call you back?"},
+  {cat:"メール",jp:"いかがお過ごしでしょうか。",en:"I hope you are doing well."},
+  {cat:"メール",jp:"突然のご連絡失礼いたします。",en:"I hope this email finds you well."},
+  {cat:"メール",jp:"ありがとうございます。",en:"Thank you very much."},
+  {cat:"メール",jp:"お返事ができておらず、申し訳ございませんでした。",en:"I'm sorry I wasn't able to reply to you earlier."},
+  {cat:"メール",jp:"ご不便をおかけして大変申し訳ございません。",en:"We sincerely apologize for the inconvenience."},
+  {cat:"メール",jp:"添付のファイルをご確認ください。",en:"Please have a look at the attached file."},
+  {cat:"メール",jp:"ご返信お待ちしております。",en:"I look forward to hearing from you soon."},
+  {cat:"メール",jp:"お手すきの際に、",en:"When you have a moment,"},
+  {cat:"メール",jp:"ご不明な点がございましたら、遠慮なさらずにご連絡ください。",en:"Please don't hesitate to contact me if you have any questions."},
+  {cat:"出張",jp:"どのくらい時間がかかるか教えていただけますか？",en:"Can you tell me how long it'll take?"},
+  {cat:"出張",jp:"支払いはクレジットカードでできますか？",en:"Can I pay with my credit card?"},
+  {cat:"出張",jp:"領収書をいただけますか？",en:"Can I get a receipt?"},
+  {cat:"出張",jp:"Wi-fiのパスワードは何ですか？",en:"What is the Wi-fi password?"},
+  {cat:"語彙",jp:"就活で英語力は有利になります。",en:"English can be an advantage when job hunting."},
+  {cat:"語彙",jp:"クライアントが私たちの提案を受け取ってくれました。",en:"The client accepted our proposal."},
+  {cat:"語彙",jp:"上司は私の提案を却下しました。",en:"My boss rejected my proposal."},
+  {cat:"語彙",jp:"アジアに事業を拡大したいです。",en:"We want to expand our business into Asia."},
+  {cat:"語彙",jp:"英語の基礎を築く必要があります。",en:"I need to build my foundation in English."},
+  {cat:"Sean",jp:"よそよそしくなく：おはようございます。",en:"G'morning! How're you doing?"},
+  {cat:"Sean",jp:"すみません、ちょっと聞き取れなかったんですが。",en:"Sorry? Would you say that again?"},
+  {cat:"Sean",jp:"はじめまして。",en:"It's nice to meet you."},
+  {cat:"Sean",jp:"何かお飲み物でもいかがですか？",en:"Would you like something to drink?"},
+  {cat:"Sean",jp:"お待たせして申し訳ございません。",en:"I'm sorry to have kept you waiting."},
+  {cat:"Sean",jp:"お元気でいらっしゃいましたか？",en:"How have you been?"},
+  {cat:"Sean",jp:"お名刺いただけますか？",en:"May I have your card?"},
+  {cat:"Sean",jp:"この（見積もり）金額は高すぎます。",en:"It's way over our budget."},
+  {cat:"Sean",jp:"せっかくのお誘いですが、先約がありまして。",en:"I'll take a rain check, if you don't mind."},
+  {cat:"Sean",jp:"今度一度ゆっくりお話ししましょう。",en:"Let's sit down and talk about it sometime next week."},
+  {cat:"Sean",jp:"それは状況によっても変わりますし、ケースバイケースですね。",en:"It depends."},
+];
+
+const SET_SIZE = 10;
+let currentSet = [], idx = 0, setNum = 1, scores = [];
+let synth = window.speechSynthesis;
+let recognition = null, spokenBuf = '';
+
+function shuffle(a) {
+  let arr = [...a];
+  for (let i = arr.length-1; i > 0; i--) {
+    let j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function startNewSet() {
+  currentSet = shuffle(PHRASES).slice(0, SET_SIZE);
+  idx = 0; scores = [];
+  document.getElementById('complete-view').style.display = 'none';
+  document.getElementById('main-view').style.display = 'block';
+  render();
+}
+
+function render() {
+  const p = currentSet[idx];
+  document.getElementById('cat').textContent = p.cat;
+  document.getElementById('jp').textContent = p.jp;
+  document.getElementById('en').textContent = p.en;
+  document.getElementById('set-badge').textContent = 'Set ' + setNum;
+  document.getElementById('progress').style.width = ((idx+1)/SET_SIZE*100) + '%';
+  document.getElementById('prog-label').textContent = (idx+1) + ' / ' + SET_SIZE;
+  document.getElementById('nav-mid').textContent = (idx+1) + ' / ' + SET_SIZE;
+  document.getElementById('feedback-area').innerHTML = '';
+  document.getElementById('spoken').textContent = '';
+  setStatus('idle', '「まず聴く」で英文を確認してください');
+  setDisabled(false, false, false, true);
+}
+
+function setStatus(type, msg) {
+  const dot = document.getElementById('dot');
+  dot.className = 'dot ' + type;
+  document.getElementById('status-msg').textContent = msg;
+}
+
+function setDisabled(listen, play, half, stop) {
+  document.getElementById('btn-listen').disabled = listen;
+  document.getElementById('btn-play').disabled = play;
+  document.getElementById('btn-half').disabled = half;
+  document.getElementById('btn-stop').disabled = stop;
+}
+
+function speak(text, rate, onEnd) {
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = rate;
+  u.onend = onEnd || null;
+  u.onerror = onEnd || null;
+  synth.speak(u);
+}
+
+function doListen() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  setStatus('speaking', '音声再生中... 聞いてください');
+  setDisabled(true, true, true, true);
+  speak(currentSet[idx].en, 1.0, () => {
+    setStatus('idle', '確認できました。「再生」でシャドウイング開始');
+    setDisabled(false, false, false, true);
+  });
+}
+
+function doShadow(rate) {
+  if (recognition) { recognition.stop(); recognition = null; }
+  spokenBuf = '';
+  document.getElementById('spoken').textContent = '';
+  setStatus('speaking', '音声再生中... 後に続いて発音してください');
+  setDisabled(true, true, true, false);
+  tryStartRecognition();
+  speak(currentSet[idx].en, rate, () => {
+    setStatus('recording', '録音中... 話し終わったら「停止・判定」を押してください');
+  });
+}
+
+function tryStartRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('spoken').textContent = '※ 音声認識非対応 — 自己採点モード';
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.onresult = (e) => {
+    let final = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+    }
+    spokenBuf = final.trim();
+    if (spokenBuf) document.getElementById('spoken').textContent = '認識: ' + spokenBuf;
+  };
+  recognition.onerror = (e) => {
+    document.getElementById('spoken').textContent = '※ マイク: ' + e.error + ' — 音声のみモード';
+  };
+  recognition.start();
+}
+
+function doStop() {
+  synth.cancel();
+  if (recognition) { recognition.stop(); recognition = null; }
+  setDisabled(true, true, true, true);
+  setStatus('done', 'AIが採点中...');
+  setTimeout(() => evaluate(currentSet[idx].en, spokenBuf), 500);
+}
+
+function calcScore(original, spoken) {
+  if (!spoken) return 0;
+  const norm = t => t.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+  const orig = norm(original), sp = norm(spoken);
+  const pool = [...sp]; let hits = 0;
+  for (const w of orig) { const i = pool.indexOf(w); if (i !== -1) { hits++; pool.splice(i,1); } }
+  return orig.length ? Math.round(hits/orig.length*100) : 0;
+}
+
+async function evaluate(original, spoken) {
+  const score = calcScore(original, spoken);
+  let feedback = '';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: `シャドウイング練習の採点をしてください。
+
+【元の文】${original}
+【認識された発話】${spoken || '（認識なし）'}
+【単語一致率】${score}%
+
+以下の形式で簡潔に日本語でフィードバックしてください（合計150字以内）：
+総評: （1文）
+良い点: （1文）
+改善点: （1文）
+ヒント: （次回への具体的アドバイス1文）`
+        }]
+      })
+    });
+    const data = await res.json();
+    feedback = data.content?.find(b => b.type==='text')?.text || 'フィードバック取得失敗';
+  } catch(e) {
+    feedback = score > 0 ? `単語一致率${score}%でした。引き続き練習しましょう！` : '音声認識なしのため自己評価してください。';
+  }
+  scores.push(score);
+  showFeedback(score, feedback);
+  setStatus('done', '採点完了');
+  setDisabled(false, false, false, true);
+}
+
+function showFeedback(score, feedback) {
+  const color = score >= 80 ? 'var(--green)' : score >= 55 ? 'var(--amber)' : 'var(--red)';
+  const label = score >= 90 ? '素晴らしい！' : score >= 75 ? 'よくできました' : score >= 55 ? 'もう少し！' : score === 0 ? '自己評価で' : 'もう一度';
+  document.getElementById('feedback-area').innerHTML = `
+    <div class="feedback">
+      <div class="score-row">
+        <div class="score-num" style="color:${color}">${score > 0 ? score+'%' : '—'}</div>
+        <div class="score-sub">${label}</div>
+      </div>
+      <div class="fb-text">${feedback}</div>
+    </div>`;
+}
+
+function goNav(dir) {
+  synth.cancel();
+  if (recognition) { recognition.stop(); recognition = null; }
+  const next = idx + dir;
+  if (next < 0 || next >= SET_SIZE) return;
+  idx = next;
+  render();
+  if (idx === SET_SIZE - 1 && scores.length >= SET_SIZE) {
+    setTimeout(showComplete, 300);
+  }
+}
+
+function showComplete() {
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  document.getElementById('main-view').style.display = 'none';
+  document.getElementById('complete-view').style.display = 'block';
+  const msg = avg >= 80 ? '素晴らしいセットでした！この調子で続けましょう 🌟' :
+              avg >= 60 ? 'いい練習になりました！次のセットも頑張りましょう 💪' :
+              'まだまだ伸びしろがあります。繰り返し練習が大切です 🔄';
+  document.getElementById('complete-msg').textContent = avg > 0 ? `平均スコア: ${avg}%\n${msg}` : msg;
+  setNum++;
+}
+
+startNewSet();
+</script>
+</body>
+</html>
