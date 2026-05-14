@@ -42,7 +42,7 @@
   .dot.done { background: var(--green); }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
   .status-msg { font-size: 13px; color: var(--muted); line-height: 1.5; }
-  .spoken { font-size: 11px; color: rgba(124,106,247,0.7); margin-top: 4px; font-style: italic; }
+  .spoken { font-size: 11px; color: #ffffff; margin-top: 4px; font-style: italic; }
   .btn-grid { display: grid; gap: 8px; margin-bottom: 8px; }
   .g1 { grid-template-columns: 1fr; }
   .g3 { grid-template-columns: 1fr 1fr 1fr; }
@@ -92,8 +92,10 @@
         <div class="spoken" id="spoken"></div>
       </div>
     </div>
-    <div class="btn-grid g1" style="margin-bottom:8px">
-      <button class="accent" id="btn-listen" onclick="doListen()">📢 まず聴く</button>
+    <div class="btn-grid g3" style="margin-bottom:8px">
+      <button class="accent" id="btn-listen" onclick="doListen(1.0)">📢 等速で聴く</button>
+      <button class="accent" id="btn-listen07" onclick="doListen(0.7)">👂 0.7倍で聴く</button>
+      <button class="accent" id="btn-listen05" onclick="doListen(0.5)">🔍 0.5倍で聴く</button>
     </div>
     <div class="btn-grid g3" style="margin-bottom:8px">
       <button id="btn-play" onclick="doShadow(1.0)" disabled>▶ 等速</button>
@@ -841,7 +843,8 @@ function render(){
   document.getElementById('nav-mid').textContent=(idx+1)+' / '+SET_SIZE;
   document.getElementById('feedback-area').innerHTML='';
   document.getElementById('spoken').textContent='';
-  setStatus('idle','「まず聴く」で英文を確認してください');
+  setStatus('idle','「聴く」ボタンで英文を確認してください');
+  setAllListenDisabled(false);
   setDisabled(false,false,false,false,true);
 }
 function setStatus(type,msg){
@@ -863,20 +866,29 @@ function speak(text,rate,onEnd){
   u.onend=onEnd||null;u.onerror=onEnd||null;
   synth.speak(u);
 }
-function doListen(){
+function doListen(rate){
   if(recognition){recognition.stop();recognition=null;}
-  setStatus('speaking','音声再生中... 聞いてください');
+  const label=rate===0.5?'0.5倍速':rate===0.7?'0.7倍速':'等速';
+  setStatus('speaking',label+'で再生中... リンキングを確認してください');
+  setAllListenDisabled(true);
   setDisabled(true,true,true,true,true);
-  speak(currentSet[idx].en,1.0,()=>{
+  speak(currentSet[idx].en,rate,()=>{
     setStatus('idle','確認できました。再生ボタンでシャドウイング開始');
+    setAllListenDisabled(false);
     setDisabled(false,false,false,false,true);
+  });
+}
+function setAllListenDisabled(d){
+  ['btn-listen','btn-listen07','btn-listen05'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.disabled=d;
   });
 }
 function doShadow(rate){
   if(recognition){recognition.stop();recognition=null;}
   spokenBuf='';
   document.getElementById('spoken').textContent='';
-  setStatus('speaking','0.5秒後に再生... 準備してください');
+  setStatus('speaking','0.7秒後に再生... 準備してください');
   setDisabled(true,true,true,true,false);
   setTimeout(()=>{
     setStatus('speaking','音声再生中... 後に続いて発音してください');
@@ -884,7 +896,7 @@ function doShadow(rate){
     speak(currentSet[idx].en,rate,()=>{
       setStatus('recording','録音中... 話し終わったら「停止・判定」を押してください');
     });
-  },500);
+  },700);
 }
 function tryStartRecognition(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
