@@ -66,6 +66,34 @@
   .complete-view p { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.7; white-space: pre-wrap; }
   .complete-view button { width: 100%; padding: 16px; font-size: 15px; }
   footer { height: env(safe-area-inset-bottom, 20px); }
+  /* ── 瞬間英作文モード ── */
+  .top-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+  .top-bar-btn { padding: 10px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; -webkit-appearance: none; transition: all 0.15s; }
+  .top-bar-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
+  .ej-jp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 20px; margin-bottom: 14px; text-align: center; min-height: 130px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .ej-jp-text { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.5; }
+  .ej-en-reveal { font-size: 17px; color: var(--accent2); line-height: 1.5; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); width: 100%; }
+  .ej-prog-label { font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 4px; }
+  .score-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .btn-x { background: rgba(248,113,113,0.12); border-color: rgba(248,113,113,0.35); color: var(--red); font-size: 22px; padding: 16px; border-radius: 12px; }
+  .btn-d { background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.35); color: var(--amber); font-size: 22px; padding: 16px; border-radius: 12px; }
+  .btn-o { background: rgba(74,222,128,0.12); border-color: rgba(74,222,128,0.35); color: var(--green); font-size: 22px; padding: 16px; border-radius: 12px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; }
+  .toggle-label { font-size: 13px; color: var(--text); }
+  .tog { width: 46px; height: 26px; border-radius: 13px; background: var(--surface2); position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+  .tog.on { background: var(--accent); }
+  .tog-knob { width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: left 0.2s; }
+  .tog.on .tog-knob { left: 23px; }
+  .result-grid { display: flex; justify-content: space-around; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 14px; }
+  .result-item { text-align: center; }
+  .result-big { font-size: 32px; font-weight: 600; line-height: 1; }
+  .result-tiny { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .review-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 14px; max-height: 220px; overflow-y: auto; }
+  .review-row { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .review-row:last-child { border-bottom: none; }
+  .r-jp { font-size: 13px; color: var(--text); margin-bottom: 3px; }
+  .r-en { font-size: 12px; color: var(--muted); }
+  .ej-cat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 8px; }
 </style>
 </head>
 <body>
@@ -79,6 +107,11 @@
 </div>
 <main>
   <div id="main-view">
+    <div class="top-bar">
+      <button class="top-bar-btn active" id="tmb-s" onclick="switchTop('shadow')">🎙 シャドウイング</button>
+      <button class="top-bar-btn" id="tmb-e" onclick="switchTop('ej')">⚡ 瞬間英作文</button>
+    </div>
+    <div id="shadow-content">
     <div class="mode-bar" id="mode-bar"></div>
     <div class="phrase-card">
       <div class="cat-tag" id="cat"></div>
@@ -111,6 +144,62 @@
       <div class="nav-mid" id="nav-mid">1 / 10</div>
       <button class="nav-btn" onclick="goNav(1)">次へ →</button>
     </div>
+    </div><!-- /shadow-content -->
+    <div id="ej-content" style="display:none">
+      <!-- EJ Home -->
+      <div id="ej-home">
+        <div class="ej-cat-label">カテゴリを選択</div>
+        <div class="mode-bar" id="ej-mode-bar"></div>
+        <div class="toggle-row">
+          <span class="toggle-label">🔀 シャッフル</span>
+          <div class="tog on" id="ej-tog" onclick="ejToggleShuffle()"><div class="tog-knob"></div></div>
+        </div>
+        <div class="btn-grid g1" style="margin-bottom:16px">
+          <button class="accent" onclick="ejStart()">▶ スタート（10問）</button>
+        </div>
+      </div>
+      <!-- EJ Practice -->
+      <div id="ej-practice" style="display:none">
+        <div class="ej-prog-label" id="ej-prog-label">1 / 10</div>
+        <div class="progress-track" style="margin-bottom:14px"><div class="progress-fill" id="ej-progress" style="width:10%"></div></div>
+        <div class="ej-jp-card">
+          <div class="ej-jp-text" id="ej-jp-text"></div>
+          <div class="ej-en-reveal" id="ej-en-text" style="display:none"></div>
+        </div>
+        <div id="ej-reveal-area">
+          <div class="btn-grid g1" style="margin-bottom:10px">
+            <button class="accent" onclick="ejReveal()">👁 英語を確認する</button>
+          </div>
+        </div>
+        <div id="ej-score-area" style="display:none">
+          <div class="btn-grid g3" style="margin-bottom:8px">
+            <button onclick="ejListen(1.0)">📢 等速</button>
+            <button onclick="ejListen(0.7)">👂 0.7倍</button>
+            <button onclick="ejListen(0.5)">🔍 0.5倍</button>
+          </div>
+          <div class="score-grid">
+            <button class="btn-x" onclick="ejScore('x')">✗</button>
+            <button class="btn-d" onclick="ejScore('d')">△</button>
+            <button class="btn-o" onclick="ejScore('o')">○</button>
+          </div>
+        </div>
+      </div>
+      <!-- EJ Results -->
+      <div id="ej-results" style="display:none">
+        <div class="result-grid">
+          <div class="result-item"><div class="result-big" style="color:var(--green)" id="ej-o-count">0</div><div class="result-tiny">○ 正解</div></div>
+          <div class="result-item"><div class="result-big" style="color:var(--amber)" id="ej-d-count">0</div><div class="result-tiny">△ もう少し</div></div>
+          <div class="result-item"><div class="result-big" style="color:var(--red)" id="ej-x-count">0</div><div class="result-tiny">✗ 要復習</div></div>
+        </div>
+        <div id="ej-review-wrap"></div>
+        <div class="btn-grid g1" style="margin-bottom:8px">
+          <button class="accent" onclick="ejRestart()">🔄 もう一度</button>
+        </div>
+        <div class="btn-grid g1" style="margin-bottom:16px">
+          <button onclick="ejGoHome()">← カテゴリ選択へ</button>
+        </div>
+      </div>
+    </div><!-- /ej-content -->
   </div>
   <div id="complete-view" class="complete-view" style="display:none">
     <h2>🎉 セット完了！</h2>
@@ -996,6 +1085,88 @@ function showComplete(){
   document.getElementById('complete-msg').textContent=avg>0?`平均スコア: ${avg}%\n${msg}`:msg;
   setNum++;
 }
+// ========== 瞬間英作文モード ==========
+let topMode='shadow';
+let ejCat='all';
+let ejShuffle=true;
+let ejSet=[],ejIdx=0,ejScores=[];
+
+function switchTop(mode){
+  topMode=mode;
+  document.getElementById('tmb-s').className='top-bar-btn'+(mode==='shadow'?' active':'');
+  document.getElementById('tmb-e').className='top-bar-btn'+(mode==='ej'?' active':'');
+  document.getElementById('shadow-content').style.display=mode==='shadow'?'block':'none';
+  document.getElementById('ej-content').style.display=mode==='ej'?'block':'none';
+  document.querySelector('.progress-wrap').style.display=mode==='shadow'?'block':'none';
+  document.getElementById('set-badge').style.display=mode==='shadow'?'block':'none';
+  if(mode==='ej'){buildEjModeBar();ejShowScreen('home');}
+}
+function buildEjModeBar(){
+  document.getElementById('ej-mode-bar').innerHTML=CATEGORIES.map(c=>
+    `<button class="mode-btn${c.id===ejCat?' active':''}" onclick="selectEjCat('${c.id}')">${c.label}</button>`
+  ).join('');
+}
+function selectEjCat(catId){ejCat=catId;buildEjModeBar();}
+function ejToggleShuffle(){
+  ejShuffle=!ejShuffle;
+  const tog=document.getElementById('ej-tog');
+  ejShuffle?tog.classList.add('on'):tog.classList.remove('on');
+}
+function ejShowScreen(screen){
+  ['ej-home','ej-practice','ej-results'].forEach(id=>{
+    document.getElementById(id).style.display=id==='ej-'+screen?'block':'none';
+  });
+}
+function ejStart(){
+  const pool=getPool(ejCat);
+  let arr=ejShuffle?shuffle([...pool]):[...pool];
+  let full=[];
+  while(full.length<10)full=full.concat(arr);
+  ejSet=full.slice(0,10);
+  ejIdx=0;ejScores=[];
+  ejRender();ejShowScreen('practice');
+}
+function ejRender(){
+  const p=ejSet[ejIdx];
+  document.getElementById('ej-jp-text').textContent=p.jp;
+  document.getElementById('ej-en-text').textContent=p.en;
+  document.getElementById('ej-en-text').style.display='none';
+  document.getElementById('ej-reveal-area').style.display='block';
+  document.getElementById('ej-score-area').style.display='none';
+  document.getElementById('ej-prog-label').textContent=(ejIdx+1)+' / 10';
+  document.getElementById('ej-progress').style.width=((ejIdx+1)/10*100)+'%';
+}
+function ejReveal(){
+  document.getElementById('ej-en-text').style.display='block';
+  document.getElementById('ej-reveal-area').style.display='none';
+  document.getElementById('ej-score-area').style.display='block';
+}
+function ejScore(score){
+  ejScores.push(score);
+  ejIdx++;
+  if(ejIdx>=10){ejShowResults();}else{ejRender();}
+}
+function ejShowResults(){
+  const o=ejScores.filter(s=>s==='o').length;
+  const d=ejScores.filter(s=>s==='d').length;
+  const x=ejScores.filter(s=>s==='x').length;
+  document.getElementById('ej-o-count').textContent=o;
+  document.getElementById('ej-d-count').textContent=d;
+  document.getElementById('ej-x-count').textContent=x;
+  const xItems=ejSet.filter((_,i)=>ejScores[i]==='x');
+  const wrap=document.getElementById('ej-review-wrap');
+  if(xItems.length>0){
+    wrap.innerHTML=`<div class="review-card"><div style="font-size:12px;color:var(--red);margin-bottom:8px;font-weight:600;">✗ 要復習リスト（${xItems.length}件）</div>`+
+      xItems.map(p=>`<div class="review-row"><div class="r-jp">${p.jp}</div><div class="r-en">${p.en}</div></div>`).join('')+`</div>`;
+  }else{
+    wrap.innerHTML=`<div style="text-align:center;padding:16px;font-size:14px;color:var(--green);">🌟 全問クリア！</div>`;
+  }
+  ejShowScreen('results');
+}
+function ejListen(rate){speak(ejSet[ejIdx].en,rate,null);}
+function ejRestart(){ejStart();}
+function ejGoHome(){ejShowScreen('home');}
+// ========================================
 buildModeBar();startNewSet();
 </script>
 </body>
