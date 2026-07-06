@@ -67,8 +67,8 @@
   .complete-view button { width: 100%; padding: 16px; font-size: 15px; }
   footer { height: env(safe-area-inset-bottom, 20px); }
   /* ── 瞬間英作文モード ── */
-  .top-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-  .top-bar-btn { padding: 10px; font-size: 13px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; -webkit-appearance: none; transition: all 0.15s; }
+  .top-bar { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+  .top-bar-btn { padding: 10px 4px; font-size: 12px; font-weight: 600; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; -webkit-appearance: none; transition: all 0.15s; line-height: 1.3; }
   .top-bar-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
   .ej-jp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 20px; margin-bottom: 14px; text-align: center; min-height: 130px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .ej-jp-text { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.5; }
@@ -108,8 +108,9 @@
 <main>
   <div id="main-view">
     <div class="top-bar">
-      <button class="top-bar-btn active" id="tmb-s" onclick="switchTop('shadow')">🎙 シャドウイング</button>
+      <button class="top-bar-btn active" id="tmb-s" onclick="switchTop('shadow')">🎙 シャドウ</button>
       <button class="top-bar-btn" id="tmb-e" onclick="switchTop('ej')">⚡ 瞬間英作文</button>
+      <button class="top-bar-btn" id="tmb-a" onclick="switchTop('audio')">🔊 音声版</button>
     </div>
     <div id="shadow-content">
     <div class="mode-bar" id="mode-bar"></div>
@@ -200,6 +201,54 @@
         </div>
       </div>
     </div><!-- /ej-content -->
+    <div id="audio-content" style="display:none">
+      <!-- Audio Home -->
+      <div id="audio-home">
+        <div class="ej-cat-label">カテゴリを選択</div>
+        <div class="mode-bar" id="audio-mode-bar"></div>
+        <div class="toggle-row">
+          <span class="toggle-label">🔀 シャッフル</span>
+          <div class="tog on" id="audio-tog" onclick="audioToggleShuffle()"><div class="tog-knob"></div></div>
+        </div>
+        <div class="btn-grid g1" style="margin-bottom:12px">
+          <button class="accent" onclick="audioStart()">▶ スタート（自動再生・10問）</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7;padding:0 4px 16px;">
+          🧺 家事をしながらの「ながら学習」用。日本語音声 →「ポーン」の合図 → 10秒の間に声に出す → 英語の答えが自動で流れます。画面操作は不要です。
+        </div>
+      </div>
+      <!-- Audio Practice -->
+      <div id="audio-practice" style="display:none">
+        <div class="ej-prog-label" id="audio-prog-label">1 / 10</div>
+        <div class="progress-track" style="margin-bottom:14px"><div class="progress-fill" id="audio-progress" style="width:10%"></div></div>
+        <div class="ej-jp-card">
+          <div class="cat-tag" id="audio-cat" style="margin-bottom:10px"></div>
+          <div class="ej-jp-text" id="audio-jp-text"></div>
+          <div class="ej-en-reveal" id="audio-en-text" style="display:none"></div>
+        </div>
+        <div class="status-box" style="margin-bottom:14px">
+          <div class="dot" id="audio-dot"></div>
+          <div style="flex:1">
+            <div class="status-msg" id="audio-status-msg">準備中...</div>
+          </div>
+        </div>
+        <div class="btn-grid g3">
+          <button id="audio-pause-btn" onclick="audioTogglePause()">⏸ 一時停止</button>
+          <button class="stop-btn" style="grid-column: span 2" onclick="audioStop()">⏹ 停止してホームへ</button>
+        </div>
+      </div>
+      <!-- Audio Results -->
+      <div id="audio-results" style="display:none; text-align:center; padding: 40px 20px;">
+        <h2 style="font-size:24px;font-weight:600;margin-bottom:8px;">🎉 10問完了！</h2>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:24px;">お疲れさまでした。</p>
+        <div class="btn-grid g1" style="margin-bottom:8px">
+          <button class="accent" onclick="audioStart()">🔄 もう一度（10問）</button>
+        </div>
+        <div class="btn-grid g1">
+          <button onclick="audioGoHome()">← カテゴリ選択へ</button>
+        </div>
+      </div>
+    </div><!-- /audio-content -->
   </div>
   <div id="complete-view" class="complete-view" style="display:none">
     <h2>🎉 セット完了！</h2>
@@ -1092,14 +1141,20 @@ let ejShuffle=true;
 let ejSet=[],ejIdx=0,ejScores=[];
 
 function switchTop(mode){
+  if(recognition){try{recognition.stop();}catch(e){}recognition=null;}
+  synth.cancel();
+  if(topMode==='audio'&&mode!=='audio'){audioStopFlag=true;}
   topMode=mode;
   document.getElementById('tmb-s').className='top-bar-btn'+(mode==='shadow'?' active':'');
   document.getElementById('tmb-e').className='top-bar-btn'+(mode==='ej'?' active':'');
+  document.getElementById('tmb-a').className='top-bar-btn'+(mode==='audio'?' active':'');
   document.getElementById('shadow-content').style.display=mode==='shadow'?'block':'none';
   document.getElementById('ej-content').style.display=mode==='ej'?'block':'none';
+  document.getElementById('audio-content').style.display=mode==='audio'?'block':'none';
   document.querySelector('.progress-wrap').style.display=mode==='shadow'?'block':'none';
   document.getElementById('set-badge').style.display=mode==='shadow'?'block':'none';
   if(mode==='ej'){buildEjModeBar();ejShowScreen('home');}
+  if(mode==='audio'){buildAudioModeBar();audioShowScreen('home');}
 }
 function buildEjModeBar(){
   document.getElementById('ej-mode-bar').innerHTML=CATEGORIES.map(c=>
@@ -1166,6 +1221,175 @@ function ejShowResults(){
 function ejListen(rate){speak(ejSet[ejIdx].en,rate,null);}
 function ejRestart(){ejStart();}
 function ejGoHome(){ejShowScreen('home');}
+
+// ========== 音声版瞬間英作文（ながら学習）モード ==========
+let audioCat='all';
+let audioShuffleOn=true;
+let audioSet=[],audioIdx=0;
+let audioPaused=false;
+let audioStopFlag=false;
+
+function buildAudioModeBar(){
+  document.getElementById('audio-mode-bar').innerHTML=CATEGORIES.map(c=>
+    `<button class="mode-btn${c.id===audioCat?' active':''}" onclick="selectAudioCat('${c.id}')">${c.label}</button>`
+  ).join('');
+}
+function selectAudioCat(id){audioCat=id;buildAudioModeBar();}
+function audioToggleShuffle(){
+  audioShuffleOn=!audioShuffleOn;
+  const tog=document.getElementById('audio-tog');
+  audioShuffleOn?tog.classList.add('on'):tog.classList.remove('on');
+}
+function audioShowScreen(screen){
+  ['audio-home','audio-practice','audio-results'].forEach(id=>{
+    document.getElementById(id).style.display=(id==='audio-'+screen)?'block':'none';
+  });
+}
+function playPon(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const osc=ctx.createOscillator();
+    const gain=ctx.createGain();
+    osc.type='sine';osc.frequency.value=880;
+    gain.gain.value=0.0001;
+    osc.connect(gain);gain.connect(ctx.destination);
+    const now=ctx.currentTime;
+    gain.gain.exponentialRampToValueAtTime(0.3,now+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001,now+0.4);
+    osc.start(now);osc.stop(now+0.45);
+    osc.onended=()=>{try{ctx.close();}catch(e){}};
+  }catch(e){}
+}
+function playChime(){
+  try{
+    const ctx=new (window.AudioContext||window.webkitAudioContext)();
+    const now=ctx.currentTime;
+    [660,880].forEach((freq,i)=>{
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type='sine';osc.frequency.value=freq;
+      gain.gain.value=0.0001;
+      osc.connect(gain);gain.connect(ctx.destination);
+      const start=now+i*0.15;
+      gain.gain.exponentialRampToValueAtTime(0.25,start+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,start+0.25);
+      osc.start(start);osc.stop(start+0.3);
+    });
+    setTimeout(()=>{try{ctx.close();}catch(e){}},500);
+  }catch(e){}
+}
+function audioSetStatus(type,msg){
+  const dot=document.getElementById('audio-dot');
+  if(dot)dot.className='dot '+type;
+  const m=document.getElementById('audio-status-msg');
+  if(m)m.textContent=msg;
+}
+function waitForSpeech(text,lang,rate){
+  return new Promise(resolve=>{
+    if(audioStopFlag){resolve();return;}
+    synth.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=lang;u.rate=rate;
+    if(lang.indexOf('ja')===0){
+      const voices=synth.getVoices();
+      const jaV=voices.find(v=>v.lang&&v.lang.indexOf('ja')===0);
+      if(jaV)u.voice=jaV;
+    }
+    u.onend=()=>resolve();
+    u.onerror=()=>resolve();
+    synth.speak(u);
+  });
+}
+function audioSleep(totalMs,onTick){
+  return new Promise(resolve=>{
+    let elapsed=0;const step=100;
+    const timer=setInterval(()=>{
+      if(audioStopFlag){clearInterval(timer);resolve();return;}
+      if(!audioPaused){
+        elapsed+=step;
+        if(onTick)onTick(Math.max(0,totalMs-elapsed));
+        if(elapsed>=totalMs){clearInterval(timer);resolve();}
+      }
+    },step);
+  });
+}
+async function audioStart(){
+  const pool=getPool(audioCat);
+  let arr=audioShuffleOn?shuffle([...pool]):[...pool];
+  let full=[];
+  while(full.length<10)full=full.concat(arr);
+  audioSet=full.slice(0,10);
+  audioIdx=0;
+  audioStopFlag=false;
+  audioPaused=false;
+  updateAudioPauseBtn();
+  audioShowScreen('practice');
+  await audioRunLoop();
+}
+async function audioRunLoop(){
+  for(audioIdx=0;audioIdx<audioSet.length;audioIdx++){
+    if(audioStopFlag)return;
+    const p=audioSet[audioIdx];
+    document.getElementById('audio-cat').textContent=p.cat;
+    document.getElementById('audio-jp-text').textContent=p.jp;
+    document.getElementById('audio-en-text').style.display='none';
+    document.getElementById('audio-prog-label').textContent=(audioIdx+1)+' / '+audioSet.length;
+    document.getElementById('audio-progress').style.width=((audioIdx+1)/audioSet.length*100)+'%';
+
+    audioSetStatus('idle','🔔 次の問題です...');
+    playChime();
+    await audioSleep(700);
+    if(audioStopFlag)return;
+
+    audioSetStatus('speaking','🗣 日本語再生中...');
+    await waitForSpeech(p.jp,'ja-JP',1.0);
+    if(audioStopFlag)return;
+
+    await audioSleep(300);
+    if(audioStopFlag)return;
+
+    playPon();
+    await audioSleep(10000,(remain)=>{
+      const sec=Math.ceil(remain/1000);
+      audioSetStatus('recording','🤔 考えて声に出してください...（残り'+sec+'秒）');
+    });
+    if(audioStopFlag)return;
+
+    audioSetStatus('speaking','📣 答えです...');
+    await waitForSpeech('答えです。','ja-JP',1.0);
+    if(audioStopFlag)return;
+
+    await audioSleep(200);
+    if(audioStopFlag)return;
+
+    document.getElementById('audio-en-text').textContent=p.en;
+    document.getElementById('audio-en-text').style.display='block';
+    audioSetStatus('speaking','🔊 英語再生中...');
+    await waitForSpeech(p.en,'en-US',1.0);
+    if(audioStopFlag)return;
+
+    audioSetStatus('done','✓ 次のフレーズへ...');
+    await audioSleep(1200);
+    if(audioStopFlag)return;
+  }
+  if(!audioStopFlag)audioShowScreen('results');
+}
+function audioTogglePause(){
+  audioPaused=!audioPaused;
+  if(audioPaused){try{synth.pause();}catch(e){}}
+  else{try{synth.resume();}catch(e){}}
+  updateAudioPauseBtn();
+}
+function updateAudioPauseBtn(){
+  const btn=document.getElementById('audio-pause-btn');
+  if(btn)btn.textContent=audioPaused?'▶ 再開':'⏸ 一時停止';
+}
+function audioStop(){
+  audioStopFlag=true;
+  synth.cancel();
+  audioShowScreen('home');
+}
+function audioGoHome(){audioShowScreen('home');}
 // ========================================
 buildModeBar();startNewSet();
 </script>
