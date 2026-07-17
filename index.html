@@ -923,10 +923,45 @@ const ALL_PHRASES = [
 {cat:"表現",jp:"目が悪いからです。（眼鏡をかける理由）",en:"To correct my vision. To see better."},
 {cat:"表現",jp:"彼にメッセージ送ったんだけど、既読スルーされた。",en:"He saw my message but didn't reply. He left me on read."},
 {cat:"表現",jp:"山田さんはそのCEOを（名前と経歴として）知っています。",en:"He knows of the CEO. He's familiar with the CEO's background."},
+// ========== 主語パターン30（There / It / 無生物主語）英国英語 2026-07-17追加 ==========
+{cat:"There構文",jp:"隅にコピー機があります。",en:"There is a copier in the corner."},
+{cat:"There構文",jp:"先月は問い合わせが20件ありました。",en:"There were 20 enquiries last month."},
+{cat:"There構文",jp:"追加料金はありますか？",en:"Are there any additional fees?"},
+{cat:"There構文",jp:"何か質問はありますか？",en:"Are there any questions?"},
+{cat:"There構文",jp:"来週、サンノゼでITカンファレンスがあります。",en:"There's an IT conference in San Jose next week."},
+{cat:"There構文",jp:"接続に問題があるようです。",en:"There seems to be a connection issue."},
+{cat:"There構文",jp:"応募者が足りていません。",en:"There aren't enough applicants."},
+{cat:"There構文",jp:"時間が足りません。",en:"There isn't enough time."},
+{cat:"There構文",jp:"スケジュールに変更がありました。",en:"There's been a change to the schedule."},
+{cat:"There構文",jp:"今日お伝えしたいポイントが3つあります。",en:"There are three points I'd like to cover today."},
+{cat:"It構文",jp:"予定通り進んでいます。",en:"It's on schedule."},
+{cat:"It構文",jp:"あと15分で始まります。",en:"It will start in 15 minutes."},
+{cat:"It構文",jp:"11時半に終わります。",en:"It will end at 11:30."},
+{cat:"It構文",jp:"それは11月12日です。",en:"It's on the 12th of November."},
+{cat:"It構文",jp:"30分ほどかかります。",en:"It'll take about 30 minutes."},
+{cat:"It構文",jp:"少し大変です。",en:"It's a little tough."},
+{cat:"It構文",jp:"予算を大幅に超えています。",en:"It's well over our budget."},
+{cat:"It構文",jp:"文字が小さすぎて読めません。",en:"It's too small to read."},
+{cat:"It構文",jp:"ここは東京に比べてとても暖かいですね。",en:"It's so warm here compared to Tokyo."},
+{cat:"It構文",jp:"状況によりますね。",en:"It depends."},
+{cat:"無生物主語",jp:"前四半期は売上が好調でした。",en:"Last quarter, sales were strong."},
+{cat:"無生物主語",jp:"売上は1,500万円上がりました。",en:"Sales went up by 15 million yen."},
+{cat:"無生物主語",jp:"このグラフは新規採用者数を示しています。",en:"This graph shows the number of new recruits."},
+{cat:"無生物主語",jp:"会議は日程変更になりました。",en:"Our meeting has been rescheduled."},
+{cat:"無生物主語",jp:"これは5分で終わります。",en:"This will take five minutes."},
+{cat:"無生物主語",jp:"問題は、応募者が足りていないことです。",en:"The problem is that there aren't enough applicants."},
+{cat:"無生物主語",jp:"給料は私をやる気にさせます。",en:"Money encourages me to work harder."},
+{cat:"無生物主語",jp:"就職活動では英語力が強みになります。",en:"English can be an advantage when job hunting."},
+{cat:"無生物主語",jp:"どうりで、ですね。（それで納得です）",en:"That explains it."},
+{cat:"無生物主語",jp:"今年の夏は本当にこたえます。",en:"This summer is just killing me."},
 ];
 
 const CATEGORIES = [
   {id:"all",    label:"🔀 ランダム",    filter:null},
+  {id:"there",  label:"📍 There構文",   filter:["There構文"]},
+  {id:"itc",    label:"🕐 It構文",      filter:["It構文"]},
+  {id:"inan",   label:"📈 無生物主語",  filter:["無生物主語"]},
+  {id:"subj",   label:"🎯 主語ミックス",filter:["There構文","It構文","無生物主語"]},
   {id:"meeting",label:"🤝 会議",        filter:["会議"]},
   {id:"phone",  label:"📞 電話",        filter:["電話"]},
   {id:"mail",   label:"✉️ メール",      filter:["メール"]},
@@ -943,6 +978,24 @@ let currentSet=[],idx=0,setNum=1,scores=[];
 let currentCat="all";
 let synth=window.speechSynthesis;
 let recognition=null,spokenBuf='';
+
+// ===== 英国英語(en-GB)ボイス選択 2026-07-17追加 =====
+let enGBVoice=null;
+function pickEnGBVoice(){
+  if(!synth)return null;
+  const vs=synth.getVoices();
+  if(!vs||!vs.length)return null;
+  const gb=vs.filter(v=>v.lang&&v.lang.replace('_','-').toLowerCase().indexOf('en-gb')===0);
+  const pref=['Google UK English Female','Google UK English Male','Daniel','Kate','Serena','Sonia','Libby','Stephanie'];
+  for(const n of pref){const m=gb.find(v=>v.name&&v.name.indexOf(n)!==-1);if(m)return m;}
+  return gb[0]||null;
+}
+function refreshEnGBVoice(){enGBVoice=pickEnGBVoice();}
+if(synth){
+  refreshEnGBVoice();
+  if(typeof synth.addEventListener==='function'){synth.addEventListener('voiceschanged',refreshEnGBVoice);}
+  else{synth.onvoiceschanged=refreshEnGBVoice;}
+}
 
 function getPool(catId){
   const cat=CATEGORIES.find(c=>c.id===catId);
@@ -1000,7 +1053,9 @@ function setDisabled(listen,play,s07,half,stop){
 function speak(text,rate,onEnd){
   synth.cancel();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';u.rate=rate;
+  u.lang='en-GB';u.rate=rate;
+  const gv=enGBVoice||pickEnGBVoice();
+  if(gv)u.voice=gv;
   u.onend=onEnd||null;u.onerror=onEnd||null;
   synth.speak(u);
 }
@@ -1040,7 +1095,7 @@ function tryStartRecognition(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('spoken').textContent='※ 音声認識非対応 — 自己採点モード';return;}
   recognition=new SR();
-  recognition.lang='en-US';recognition.continuous=true;recognition.interimResults=true;
+  recognition.lang='en-GB';recognition.continuous=true;recognition.interimResults=true;
   recognition.onresult=(e)=>{
     let final='';
     for(let i=0;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';}
@@ -1288,6 +1343,10 @@ function waitForSpeech(text,lang,rate){
       const voices=synth.getVoices();
       const jaV=voices.find(v=>v.lang&&v.lang.indexOf('ja')===0);
       if(jaV)u.voice=jaV;
+    }else if(lang.indexOf('en')===0){
+      u.lang='en-GB';
+      const gv=enGBVoice||pickEnGBVoice();
+      if(gv)u.voice=gv;
     }
     u.onend=()=>resolve();
     u.onerror=()=>resolve();
@@ -1365,7 +1424,7 @@ async function audioRunLoop(){
     document.getElementById('audio-en-text').textContent=p.en;
     document.getElementById('audio-en-text').style.display='block';
     audioSetStatus('speaking','🔊 英語再生中...');
-    await waitForSpeech(p.en,'en-US',1.0);
+    await waitForSpeech(p.en,'en-GB',1.0);
     if(audioStopFlag)return;
 
     audioSetStatus('done','✓ 次のフレーズへ...');
