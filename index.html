@@ -76,6 +76,7 @@
   .top-bar-btn.active { background: var(--accent); color: #fff; border-color: transparent; }
   .ej-jp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 20px; margin-bottom: 14px; text-align: center; min-height: 130px; display: flex; align-items: center; justify-content: center; flex-direction: column; }
   .ej-jp-text { font-size: 20px; font-weight: 500; color: var(--text); line-height: 1.5; }
+  .ej-ng-text { font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 10px; opacity: 0.75; width: 100%; }
   .ej-en-reveal { font-size: 17px; color: var(--accent2); line-height: 1.5; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); width: 100%; }
   .ej-prog-label { font-size: 11px; color: var(--muted); text-align: right; margin-bottom: 4px; }
   .score-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 14px; }
@@ -172,6 +173,7 @@
         <div class="ej-jp-card">
           <div class="ej-jp-text" id="ej-jp-text"></div>
           <div class="ej-en-reveal" id="ej-en-text" style="display:none"></div>
+          <div class="ej-ng-text" id="ej-ng-text" style="display:none"></div>
         </div>
         <div id="ej-reveal-area">
           <div class="btn-grid g1" style="margin-bottom:10px">
@@ -961,6 +963,43 @@ const ALL_PHRASES = [
 {cat:"無生物主語",jp:"就職活動では英語力が強みになります。",en:"English can be an advantage when job hunting.",g:""},
 {cat:"無生物主語",jp:"どうりで、ですね。（それで納得です）",en:"That explains it.",g:""},
 {cat:"無生物主語",jp:"今年の夏は本当にこたえます。",en:"This summer is just killing me.",g:""},
+// ========== レジスター調整・ヘッジ 36 (30+意見表明の予防線6) 2026-08-07追加 ==========
+{cat:"ヘッジ",jp:"それは予算を少し超えています",en:"That's a bit above what we'd budgeted for.",g:"",sub:"A_価格・条件",ng:"It's too expensive."},
+{cat:"ヘッジ",jp:"正直、その価格は厳しいです",en:"Honestly, that price would be a stretch for us.",g:"",sub:"A_価格・条件",ng:"We can't pay that."},
+{cat:"ヘッジ",jp:"そこは少し調整の余地はありますか",en:"Is there any flexibility on that?",g:"YN疑問",sub:"A_価格・条件",ng:"Please make it cheaper."},
+{cat:"ヘッジ",jp:"それはこちらではうまくいかない気がします",en:"I'm not sure that would work on our end.",g:"",sub:"B_反対・不同意",ng:"I don't think so."},
+{cat:"ヘッジ",jp:"私は少し違う見方をしています",en:"I see it a little differently.",g:"",sub:"B_反対・不同意",ng:"I disagree."},
+{cat:"ヘッジ",jp:"その点は一つ懸念があります",en:"I do have one concern about that.",g:"",sub:"B_反対・不同意",ng:"That's a problem."},
+{cat:"ヘッジ",jp:"一点だけ引っかかっている点があります",en:"There's one thing I'd want to flag.",g:"不定詞",sub:"B_反対・不同意",ng:"I don't like it."},
+{cat:"ヘッジ",jp:"現段階では難しいと思います",en:"That would be difficult for us at this stage.",g:"",sub:"C_断る・保留",ng:"No, we can't."},
+{cat:"ヘッジ",jp:"一度持ち帰らせてください",en:"Let me take that back to my team.",g:"命令依頼|句動詞|使役",sub:"C_断る・保留",ng:"I need to ask my boss."},
+{cat:"ヘッジ",jp:"今日この場では決められません",en:"I'm not in a position to commit to that today.",g:"不定詞",sub:"C_断る・保留",ng:"I can't decide now."},
+{cat:"ヘッジ",jp:"今回は見送らせてください",en:"We'll have to pass on this one.",g:"助動詞:義務|助動詞:未来|不定詞",sub:"C_断る・保留",ng:"No, thank you."},
+{cat:"ヘッジ",jp:"手元に数字がないので、確認して折り返します",en:"I don't have those numbers in front of me, but I can find out.",g:"接続詞|句動詞",sub:"D_答えられない・確認",ng:"I don't know."},
+{cat:"ヘッジ",jp:"確認してから改めてお答えします",en:"Let me double-check and get back to you.",g:"命令依頼|句動詞|使役",sub:"D_答えられない・確認",ng:"I'm not sure. I'll check."},
+{cat:"ヘッジ",jp:"認識が合っているか確認させてください",en:"Let me make sure I've got this right.",g:"過去形|命令依頼|使役",sub:"D_答えられない・確認",ng:"Is that right?"},
+{cat:"ヘッジ",jp:"それを送っていただけますか",en:"Would you mind sending that over?",g:"助動詞:依頼|動名詞|YN疑問",sub:"E_依頼",ng:"Can you send me the file?"},
+{cat:"ヘッジ",jp:"一度お時間をいただいて説明いただけますか",en:"Would you have some time to walk me through it?",g:"助動詞:依頼|不定詞|YN疑問|句動詞",sub:"E_依頼",ng:"Can we meet?"},
+{cat:"ヘッジ",jp:"急かすようで恐縮ですが",en:"I don't want to rush you, but...",g:"不定詞|接続詞",sub:"E_依頼",ng:"Please hurry."},
+{cat:"ヘッジ",jp:"お手数ですが優先していただけると助かります",en:"It would really help if we could prioritise this.",g:"条件",sub:"E_依頼",ng:"Please do it first."},
+{cat:"ヘッジ",jp:"いい質問ですね。少し考えさせてください",en:"That's a good question, let me think for a second.",g:"使役",sub:"F_時間を稼ぐ",ng:"Wait. Ah... um..."},
+{cat:"ヘッジ",jp:"つまり〜ということでよろしいですか",en:"So if I understand correctly, you're asking about...?",g:"進行形|条件",sub:"F_時間を稼ぐ",ng:"What? Say again?"},
+{cat:"ヘッジ",jp:"考慮すべき点がいくつかあります",en:"There are a couple of things to consider here.",g:"不定詞|There構文",sub:"F_時間を稼ぐ",ng:"It's difficult."},
+{cat:"ヘッジ",jp:"端的に言うと",en:"So, the short answer is...",g:"",sub:"F_時間を稼ぐ",ng:"Answer is..."},
+{cat:"ヘッジ",jp:"パッと思いつくところでは",en:"Off the top of my head, ...",g:"",sub:"F_時間を稼ぐ",ng:"Maybe... I think..."},
+{cat:"ヘッジ",jp:"もっともなご指摘です。その点は後ほど改めてお答えします",en:"That's a fair point, let me come back to you on that.",g:"句動詞|使役",sub:"F_時間を稼ぐ",ng:"That's a good point."},
+{cat:"ヘッジ",jp:"スケジュールが少し押しています",en:"We're running a little behind on the schedule.",g:"進行形",sub:"G_悪い知らせ",ng:"We are late."},
+{cat:"ヘッジ",jp:"想定より時間がかかっています",en:"It's taking longer than we'd anticipated.",g:"比較",sub:"G_悪い知らせ",ng:"It's very slow."},
+{cat:"ヘッジ",jp:"一点、問題が出てきました",en:"We've run into one issue.",g:"句動詞",sub:"G_悪い知らせ",ng:"We have a big problem."},
+{cat:"ヘッジ",jp:"承知しました。こちらで進めます",en:"Understood, we'll take it from here.",g:"助動詞:未来|句動詞",sub:"H_受け止め・合意",ng:"OK, I will do it."},
+{cat:"ヘッジ",jp:"ご指摘ありがとうございます。反映させます",en:"That's helpful, let me factor that in.",g:"句動詞|使役",sub:"H_受け止め・合意",ng:"Thank you. I will consider."},
+{cat:"ヘッジ",jp:"その方向でこちらは問題ありません",en:"That works on our end.",g:"",sub:"H_受け止め・合意",ng:"It's OK."},
+{cat:"ヘッジ",jp:"大した意見じゃないんですが、",en:"This is just my two cents, but ~",g:"接続詞",sub:"I_意見表明の予防線"},
+{cat:"ヘッジ",jp:"ひとつの考えの種として。",en:"Just food for thought.",g:"過去形|命令依頼",sub:"I_意見表明の予防線"},
+{cat:"ヘッジ",jp:"とりあえず投げてみるだけですが。",en:"Just throwing it out there.",g:"命令依頼|句動詞",sub:"I_意見表明の予防線"},
+{cat:"ヘッジ",jp:"これは有益かもしれません。",en:"This might be beneficial.",g:"",sub:"I_意見表明の予防線",ng:"We should do this."},
+{cat:"ヘッジ",jp:"少しご相談したかったのですが。",en:"I just wanted to discuss ~",g:"不定詞",sub:"I_意見表明の予防線"},
+{cat:"ヘッジ",jp:"ちょっといいですか？",en:"Do you have a second?",g:"YN疑問",sub:"I_意見表明の予防線"},
 ];
 
 const CATEGORIES = [
@@ -978,27 +1017,28 @@ const CATEGORIES = [
   {id:"biz",    label:"💼 業務全般",    filter:["挨拶","同僚","依頼","進捗","業績","問題解決","オフィス"]},
   {id:"vocab",  label:"📖 語彙・動詞",  filter:["語彙","動詞","形容詞","表現","論理"]},
   {id:"intro",  label:"👤 自己紹介",    filter:["自己紹介","文化","定義"]},
+  {id:"hedge",  label:"🛡 ヘッジ・レジスター (36)", filter:["ヘッジ"]},
 ];
 
 const GRAMMAR_CATEGORIES = [
   {id:"g_all",  label:"🔀 文法ミックス", g:null},
-  {id:"g_inf",  label:"➡️ 不定詞 (91)",      g:["不定詞"]},
-  {id:"g_yn",   label:"❓ Yes/No疑問 (84)",  g:["YN疑問"]},
+  {id:"g_inf",  label:"➡️ 不定詞 (98)",      g:["不定詞"]},
+  {id:"g_yn",   label:"❓ Yes/No疑問 (88)",  g:["YN疑問"]},
   {id:"g_wh",   label:"🔎 WH疑問 (62)",      g:["WH疑問"]},
-  {id:"g_mreq", label:"🙏 助動詞・依頼 (56)", g:["助動詞:依頼"]},
-  {id:"g_past", label:"⏮ 過去形 (55)",       g:["過去形"]},
-  {id:"g_mwill",label:"⏭ 助動詞・未来 (46)", g:["助動詞:未来"]},
-  {id:"g_prog", label:"🔄 進行形 (31)",      g:["進行形"]},
-  {id:"g_imp",  label:"📣 命令・依頼文 (30)", g:["命令依頼"]},
-  {id:"g_conj", label:"🔗 接続詞 (29)",      g:["接続詞"]},
-  {id:"g_phr",  label:"🧩 句動詞 (26)",      g:["句動詞"]},
-  {id:"g_cond", label:"🔀 条件・if (21)",    g:["条件"]},
-  {id:"g_caus", label:"👐 使役 (20)",        g:["使役"]},
-  {id:"g_ger",  label:"🌀 動名詞 (19)",      g:["動名詞"]},
-  {id:"g_mobl", label:"⚠️ 助動詞・義務 (19)", g:["助動詞:義務"]},
-  {id:"g_comp", label:"⚖️ 比較 (16)",        g:["比較"]},
+  {id:"g_mreq", label:"🙏 助動詞・依頼 (58)", g:["助動詞:依頼"]},
+  {id:"g_past", label:"⏮ 過去形 (57)",       g:["過去形"]},
+  {id:"g_mwill",label:"⏭ 助動詞・未来 (48)", g:["助動詞:未来"]},
+  {id:"g_prog", label:"🔄 進行形 (33)",      g:["進行形"]},
+  {id:"g_imp",  label:"📣 命令・依頼文 (35)", g:["命令依頼"]},
+  {id:"g_conj", label:"🔗 接続詞 (32)",      g:["接続詞"]},
+  {id:"g_phr",  label:"🧩 句動詞 (35)",      g:["句動詞"]},
+  {id:"g_cond", label:"🔀 条件・if (23)",    g:["条件"]},
+  {id:"g_caus", label:"👐 使役 (26)",        g:["使役"]},
+  {id:"g_ger",  label:"🌀 動名詞 (20)",      g:["動名詞"]},
+  {id:"g_mobl", label:"⚠️ 助動詞・義務 (20)", g:["助動詞:義務"]},
+  {id:"g_comp", label:"⚖️ 比較 (17)",        g:["比較"]},
   {id:"g_pass", label:"🔃 受動態 (10)",      g:["受動態"]},
-  {id:"g_there",label:"📍 There構文 (10)",   g:["There構文"]},
+  {id:"g_there",label:"📍 There構文 (11)",   g:["There構文"]},
   {id:"g_perf", label:"✅ 現在完了 (9)",     g:["現在完了"]},
 ];
 
@@ -1014,12 +1054,19 @@ let recognition=null,spokenBuf='';
 
 // ===== 英国英語(en-GB)ボイス選択 2026-07-17追加 =====
 let enGBVoice=null;
+let voiceGender='female';
+// 読み上げ・採点用に ~ / ... / 末尾記号を除去
+function ttsText(s){
+  return String(s||'').replace(/\s*~\s*$/,'').replace(/\s*\.\.\.\s*(\?)?\s*$/,'$1').replace(/\s*—\s*/g,', ').trim();
+}
 function pickEnGBVoice(){
   if(!synth)return null;
   const vs=synth.getVoices();
   if(!vs||!vs.length)return null;
   const gb=vs.filter(v=>v.lang&&v.lang.replace('_','-').toLowerCase().indexOf('en-gb')===0);
-  const pref=['Google UK English Female','Google UK English Male','Daniel','Kate','Serena','Sonia','Libby','Stephanie'];
+  const femaleFirst=['Google UK English Female','Kate','Serena','Sonia','Libby','Stephanie','Martha','Fiona','Karen','Moira'];
+  const maleFallback=['Google UK English Male','Daniel','Arthur','Oliver','Graham'];
+  const pref=voiceGender==='male'?maleFallback.concat(femaleFirst):femaleFirst.concat(maleFallback);
   for(const n of pref){const m=gb.find(v=>v.name&&v.name.indexOf(n)!==-1);if(m)return m;}
   return gb[0]||null;
 }
@@ -1107,7 +1154,7 @@ function setDisabled(listen,play,s07,half,stop){
 }
 function speak(text,rate,onEnd){
   synth.cancel();
-  const u=new SpeechSynthesisUtterance(text);
+  const u=new SpeechSynthesisUtterance(ttsText(text));
   u.lang='en-GB';u.rate=rate;
   const gv=enGBVoice||pickEnGBVoice();
   if(gv)u.voice=gv;
@@ -1165,7 +1212,7 @@ function doStop(){
   if(recognition){recognition.stop();recognition=null;}
   setDisabled(true,true,true,true,true);
   setStatus('done','AIが採点中...');
-  setTimeout(()=>evaluate(currentSet[idx].en,spokenBuf),500);
+  setTimeout(()=>evaluate(ttsText(currentSet[idx].en),spokenBuf),500);
 }
 function calcScore(original,spoken){
   if(!spoken)return{total:0,coverage:0,order:0};
@@ -1299,6 +1346,9 @@ function ejRender(){
   document.getElementById('ej-jp-text').textContent=p.jp;
   document.getElementById('ej-en-text').textContent=p.en;
   document.getElementById('ej-en-text').style.display='none';
+  const ngEl=document.getElementById('ej-ng-text');
+  ngEl.textContent=p.ng?('❌ 避ける： '+p.ng):'';
+  ngEl.style.display='none';
   document.getElementById('ej-reveal-area').style.display='block';
   document.getElementById('ej-score-area').style.display='none';
   document.getElementById('ej-prog-label').textContent=(ejIdx+1)+' / 10';
@@ -1306,6 +1356,8 @@ function ejRender(){
 }
 function ejReveal(){
   document.getElementById('ej-en-text').style.display='block';
+  const ngEl=document.getElementById('ej-ng-text');
+  ngEl.style.display=ngEl.textContent?'block':'none';
   document.getElementById('ej-reveal-area').style.display='none';
   document.getElementById('ej-score-area').style.display='block';
 }
@@ -1485,7 +1537,7 @@ async function audioRunLoop(){
     document.getElementById('audio-en-text').textContent=p.en;
     document.getElementById('audio-en-text').style.display='block';
     audioSetStatus('speaking','🔊 英語再生中...');
-    await waitForSpeech(p.en,'en-GB',1.0);
+    await waitForSpeech(ttsText(p.en),'en-GB',1.0);
     if(audioStopFlag)return;
 
     audioSetStatus('done','✓ 次のフレーズへ...');
